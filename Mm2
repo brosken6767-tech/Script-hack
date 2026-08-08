@@ -1,74 +1,187 @@
--- Защита от повторного запуска
-if _G.MM2ScriptRunning then
-    print("Скрипт уже запущен!")
+-- Проверка на повторный запуск, чтобы не плодить интерфейсы
+if _G.MM2RayfieldLoaded then
+    local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+    Rayfield:Notify({
+        Title = "MM2 Скрипт",
+        Content = "Интерфейс уже открыт!",
+        Duration = 3
+    })
     return
 end
-_G.MM2ScriptRunning = true
+_G.MM2RayfieldLoaded = true
+
+-- Загрузка библиотеки Rayfield UI
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "MM2 Delta Hub",
+    LoadingTitle = "Загрузка MM2 Скрипта...",
+    LoadingSubtitle = "by Assistant",
+    ConfigurationSaving = {
+        Enabled = false,
+    },
+    Discord = {
+        Enabled = false,
+    },
+    KeySystem = false,
+})
+
+-- Создаем вкладку
+local MainTab = Window:CreateTab("Главная", 4483362458)
+
+-- Переменные для работы функций (включено/выключено)
+local ESPEnabled = false
+local GunTeleportEnabled = false
+local AimbotEnabled = false
+local HitboxEnabled = false
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Функция 1: ESP (Шериф, Убийца, Иннокент) + ESP Пистолета и Авто-подбор
-local function setupESPAndGun()
-    RunService.RenderStepped:Connect(function()
+local lastPos = nil
+local hasTeleportedToGun = false
+
+-- 1. Секция ESP и Телепорта к пистолету
+MainTab:CreateSection("ESP и Оружие")
+
+MainTab:CreateToggle({
+    Name = "ESP Ролей (Убийца, Шериф, Иннокент)",
+    CurrentValue = false,
+    Flag = "ESP_Toggle",
+    Callback = function(Value)
+        ESPEnabled = Value
+        -- Убираем подсветку при выключении
+        if not Value then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("MM2_Highlight") then
+                    player.Character.MM2_Highlight:Destroy()
+                end
+            end
+        end
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "Авто-ТП к пистолету (и обратно)",
+    CurrentValue = false,
+    Flag = "GunTP_Toggle",
+    Callback = function(Value)
+        GunTeleportEnabled = Value
+        if not Value then
+            hasTeleportedToGun = false
+            lastPos = nil
+        end
+    end,
+})
+
+-- 2. Секция Аимбота
+MainTab:CreateSection("Боевые функции")
+
+MainTab:CreateToggle({
+    Name = "Аимбот для Убийцы (с ножом)",
+    CurrentValue = false,
+    Flag = "Aimbot_Toggle",
+    Callback = function(Value)
+        AimbotEnabled = Value
+    end,
+})
+
+-- 3. Секция Хитбоксов (Увеличение голов)
+MainTab:CreateSection("Увеличение голов (Hitboxes)")
+
+MainTab:CreateToggle({
+    Name = "Увеличение голов (Иннокент/Шериф x20, Убийца x10)",
+    CurrentValue = false,
+    Flag = "Hitbox_Toggle",
+    Callback = function(Value)
+        HitboxEnabled = Value
+        -- Возвращаем стандартные головы при выключении
+        if not Value then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("Head") then
+                    player.Character.Head.Size = Vector3.new(2, 1, 1)
+                    player.Character.Head.Transparency = 0
+                    player.Character.Head.CanCollide = true
+                end
+            end
+        end
+    end,
+})
+
+-- Логика выполнения в реальном времени (потоки)
+
+-- Поток для ESP и ТП пистолета
+RunService.RenderStepped:Connect(function()
+    -- ESP Ролей
+    if ESPEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 local character = player.Character
                 local highlight = character:FindFirstChild("MM2_Highlight")
                 
-                -- Проверка ролей по инвентарю/оружию
                 local role = "Innocent"
                 local backpack = player:FindFirstChild("Backpack")
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
                 
-                -- Убийца обычно с ножом в руках или в рюкзаке
                 if (character:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))) then
                     role = "Murderer"
                 elseif (character:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))) then
                     role = "Sheriff"
                 end
 
-                -- Создаем или обновляем подсветку (ESP)
                 if not highlight then
                     highlight = Instance.new("Highlight")
                     highlight.Name = "MM2_Highlight"
                     highlight.Parent = character
+                    highlight.FillTransparency = 0.5
                 end
 
-                -- Цвета: Убийца - Красный, Шериф - Синий, Иннокент - Зеленый
                 if role == "Murderer" then
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Красный
                 elseif role == "Sheriff" then
-                    highlight.FillColor = Color3.fromRGB(0, 0, 255)
+                    highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Синий
                 else
-                    highlight.FillColor = Color3.fromRGB(0, 255, 0)
-                end
-                highlight.FillTransparency = 0.5
-            end
-        end
-
-        -- Функция 2: ESP Пистолета, телепортация при выпадении
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj.Name == "GunDrop" then
-                -- Если пистолет упал, телепортируем игрока к нему
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                    highlight.FillColor = Color3.fromRGB(0, 255, 0) -- Зеленый
                 end
             end
         end
-    end)
-end
+    end
 
--- Функция 3: Аимбот для Убийцы (наводит камеру на ближайшего видимого игрока, когда в руках нож)
-local function setupAimbot()
-    RunService.RenderStepped:Connect(function()
+    -- Телепорт к выпавшему пистолету
+    if GunTeleportEnabled then
+        local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            local gunDrop = nil
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj.Name == "GunDrop" then
+                    gunDrop = obj
+                    break
+                end
+            end
+            
+            if gunDrop then
+                if not hasTeleportedToGun then
+                    lastPos = rootPart.CFrame
+                    rootPart.CFrame = gunDrop.CFrame
+                    hasTeleportedToGun = true
+                end
+            else
+                if hasTeleportedToGun and lastPos then
+                    rootPart.CFrame = lastPos
+                    hasTeleportedToGun = false
+                    lastPos = nil
+                end
+            end
+        end
+    end
+end)
+
+-- Поток для Аимбота
+RunService.RenderStepped:Connect(function()
+    if AimbotEnabled then
         local character = LocalPlayer.Character
-        if not character then return end
-        
-        -- Проверяем, есть ли нож в руках (выполняем аимбот только для убийцы)
-        if character:FindFirstChild("Knife") then
+        if character and character:FindFirstChild("Knife") then
             local camera = Workspace.CurrentCamera
             local closestPlayer = nil
             local shortestDistance = math.huge
@@ -85,18 +198,17 @@ local function setupAimbot()
                 end
             end
             
-            -- Плавное наведение камеры на цель
             if closestPlayer and closestPlayer.Character:FindFirstChild("Head") then
                 local head = closestPlayer.Character.Head
                 camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
             end
         end
-    end)
-end
+    end
+end)
 
--- Функция 4 и 5: Увеличение голов (Иннокенты/Шерифы в 20 раз, Убийца в 10 раз)
-local function setupHitboxes()
-    RunService.Heartbeat:Connect(function()
+-- Поток для Хитбоксов (голов)
+RunService.Heartbeat:Connect(function()
+    if HitboxEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character then
                 local head = player.Character:FindFirstChild("Head")
@@ -104,29 +216,26 @@ local function setupHitboxes()
                 local character = player.Character
                 
                 if head then
-                    -- Определяем роль для размера головы
                     local isMurderer = character:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))
                     
                     if isMurderer then
-                        -- Убийца: голова увеличена в 10 раз
-                        head.Size = Vector3.new(20, 20, 20)
+                        head.Size = Vector3.new(20, 20, 20) -- Убийца (х10)
                         head.Transparency = 0.7
                         head.CanCollide = false
                     else
-                        -- Иннокенты и Шерифы: голова увеличена в 20 раз
-                        head.Size = Vector3.new(40, 40, 40)
+                        head.Size = Vector3.new(40, 40, 40) -- Иннокент/Шериф (х20)
                         head.Transparency = 0.7
                         head.CanCollide = false
                     end
                 end
             end
         end
-    end)
-end
+    end
+end)
 
--- Запуск всех функций
-setupESPAndGun()
-setupAimbot()
-setupHitboxes()
-
-print("MM2 Скрипт успешно активирован в Delta!")
+-- Уведомление об успешной загрузке меню
+Rayfield:Notify({
+    Title = "MM2 Hub Запущен!",
+    Content = "Интерфейс Rayfield успешно загружен в Delta.",
+    Duration = 5
+})
