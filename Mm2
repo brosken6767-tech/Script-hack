@@ -1,0 +1,132 @@
+-- Защита от повторного запуска
+if _G.MM2ScriptRunning then
+    print("Скрипт уже запущен!")
+    return
+end
+_G.MM2ScriptRunning = true
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Функция 1: ESP (Шериф, Убийца, Иннокент) + ESP Пистолета и Авто-подбор
+local function setupESPAndGun()
+    RunService.RenderStepped:Connect(function()
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local character = player.Character
+                local highlight = character:FindFirstChild("MM2_Highlight")
+                
+                -- Проверка ролей по инвентарю/оружию
+                local role = "Innocent"
+                local backpack = player:FindFirstChild("Backpack")
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                
+                -- Убийца обычно с ножом в руках или в рюкзаке
+                if (character:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))) then
+                    role = "Murderer"
+                elseif (character:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))) then
+                    role = "Sheriff"
+                end
+
+                -- Создаем или обновляем подсветку (ESP)
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "MM2_Highlight"
+                    highlight.Parent = character
+                end
+
+                -- Цвета: Убийца - Красный, Шериф - Синий, Иннокент - Зеленый
+                if role == "Murderer" then
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                elseif role == "Sheriff" then
+                    highlight.FillColor = Color3.fromRGB(0, 0, 255)
+                else
+                    highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                end
+                highlight.FillTransparency = 0.5
+            end
+        end
+
+        -- Функция 2: ESP Пистолета, телепортация при выпадении
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj.Name == "GunDrop" then
+                -- Если пистолет упал, телепортируем игрока к нему
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                end
+            end
+        end
+    end)
+end
+
+-- Функция 3: Аимбот для Убийцы (наводит камеру на ближайшего видимого игрока, когда в руках нож)
+local function setupAimbot()
+    RunService.RenderStepped:Connect(function()
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        -- Проверяем, есть ли нож в руках (выполняем аимбот только для убийцы)
+        if character:FindFirstChild("Knife") then
+            local camera = Workspace.CurrentCamera
+            local closestPlayer = nil
+            local shortestDistance = math.huge
+            
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = player.Character.HumanoidRootPart
+                    local distance = (character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    
+                    if distance < shortestDistance then
+                        shortestDistance = distance
+                        closestPlayer = player
+                    end
+                end
+            end
+            
+            -- Плавное наведение камеры на цель
+            if closestPlayer and closestPlayer.Character:FindFirstChild("Head") then
+                local head = closestPlayer.Character.Head
+                camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
+            end
+        end
+    end)
+end
+
+-- Функция 4 и 5: Увеличение голов (Иннокенты/Шерифы в 20 раз, Убийца в 10 раз)
+local function setupHitboxes()
+    RunService.Heartbeat:Connect(function()
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local head = player.Character:FindFirstChild("Head")
+                local backpack = player:FindFirstChild("Backpack")
+                local character = player.Character
+                
+                if head then
+                    -- Определяем роль для размера головы
+                    local isMurderer = character:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))
+                    
+                    if isMurderer then
+                        -- Убийца: голова увеличена в 10 раз
+                        head.Size = Vector3.new(20, 20, 20)
+                        head.Transparency = 0.7
+                        head.CanCollide = false
+                    else
+                        -- Иннокенты и Шерифы: голова увеличена в 20 раз
+                        head.Size = Vector3.new(40, 40, 40)
+                        head.Transparency = 0.7
+                        head.CanCollide = false
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- Запуск всех функций
+setupESPAndGun()
+setupAimbot()
+setupHitboxes()
+
+print("MM2 Скрипт успешно активирован в Delta!")
