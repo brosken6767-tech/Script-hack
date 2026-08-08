@@ -1,0 +1,541 @@
+if game.CoreGui:FindFirstChild("WASDHubUnique") then
+    game.CoreGui.WASDHubUnique:Destroy()
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local localPlayer = Players.LocalPlayer
+local camera = Workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "WASDHubUnique"
+ScreenGui.Parent = game.CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 520, 0, 410)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -205)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(138, 43, 226)
+UIStroke.Thickness = 2.5
+UIStroke.Parent = MainFrame
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundColor3 = Color3.fromRGB(25, 20, 40)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 12)
+TopCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 250, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "⚡ WASD Hub v1.0"
+Title.TextColor3 = Color3.fromRGB(220, 180, 255)
+Title.TextSize = 16
+Title.Font = Enum.Font.FredokaOne
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -40, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 30, 60)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+CloseBtn.TextSize = 16
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+local TabHolder = Instance.new("ScrollingFrame")
+TabHolder.Size = UDim2.new(0, 130, 1, -55)
+TabHolder.Position = UDim2.new(0, 10, 0, 50)
+TabHolder.BackgroundTransparency = 1
+TabHolder.BorderSizePixel = 0
+TabHolder.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabHolder.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.Parent = TabHolder
+
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(0, 355, 1, -55)
+ContentArea.Position = UDim2.new(0, 150, 0, 50)
+ContentArea.BackgroundColor3 = Color3.fromRGB(20, 18, 30)
+ContentArea.BorderSizePixel = 0
+ContentArea.Parent = MainFrame
+
+local ContentCorner = Instance.new("UICorner")
+ContentCorner.CornerRadius = UDim.new(0, 8)
+ContentCorner.Parent = ContentArea
+
+local PageMain = Instance.new("ScrollingFrame")
+PageMain.Size = UDim2.new(1, -20, 1, -20)
+PageMain.Position = UDim2.new(0, 10, 0, 10)
+PageMain.BackgroundTransparency = 1
+PageMain.BorderSizePixel = 0
+PageMain.CanvasSize = UDim2.new(0, 0, 0, 370)
+PageMain.Visible = true
+PageMain.Parent = ContentArea
+
+local Page1List = Instance.new("UIListLayout")
+Page1List.Padding = UDim.new(0, 10)
+Page1List.Parent = PageMain
+
+local PageAimbot = Instance.new("ScrollingFrame")
+PageAimbot.Size = UDim2.new(1, -20, 1, -20)
+PageAimbot.Position = UDim2.new(0, 10, 0, 10)
+PageAimbot.BackgroundTransparency = 1
+PageAimbot.BorderSizePixel = 0
+PageAimbot.CanvasSize = UDim2.new(0, 0, 0, 250)
+PageAimbot.Visible = false
+PageAimbot.Parent = ContentArea
+
+local Page2List = Instance.new("UIListLayout")
+Page2List.Padding = UDim.new(0, 10)
+Page2List.Parent = PageAimbot
+
+local function createTabButton(text, pageToShow)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 22, 38)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(180, 170, 210)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = TabHolder
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        PageMain.Visible = false
+        PageAimbot.Visible = false
+        pageToShow.Visible = true
+    end)
+    return btn
+end
+
+createTabButton("Main", PageMain)
+createTabButton("Aimbot", PageAimbot)
+
+local SpeedBox = Instance.new("TextBox")
+SpeedBox.Size = UDim2.new(1, 0, 0, 40)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+SpeedBox.Text = "16"
+SpeedBox.PlaceholderText = "WalkSpeed..."
+SpeedBox.TextColor3 = Color3.fromRGB(220, 200, 255)
+SpeedBox.TextSize = 13
+SpeedBox.Font = Enum.Font.GothamBold
+SpeedBox.Parent = PageMain
+
+local SpeedCorner = Instance.new("UICorner")
+SpeedCorner.CornerRadius = UDim.new(0, 8)
+SpeedCorner.Parent = SpeedBox
+
+SpeedBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local num = tonumber(SpeedBox.Text)
+        if num and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            localPlayer.Character.Humanoid.WalkSpeed = num
+        end
+    end
+end)
+
+local JumpBox = Instance.new("TextBox")
+JumpBox.Size = UDim2.new(1, 0, 0, 40)
+JumpBox.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+JumpBox.Text = "50"
+JumpBox.PlaceholderText = "JumpPower..."
+JumpBox.TextColor3 = Color3.fromRGB(220, 200, 255)
+JumpBox.TextSize = 13
+JumpBox.Font = Enum.Font.GothamBold
+JumpBox.Parent = PageMain
+
+local JumpCorner = Instance.new("UICorner")
+JumpCorner.CornerRadius = UDim.new(0, 8)
+JumpCorner.Parent = JumpBox
+
+JumpBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local num = tonumber(JumpBox.Text)
+        if num and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            local hum = localPlayer.Character.Humanoid
+            hum.UseJumpPower = true
+            hum.JumpPower = num
+        end
+    end
+end)
+
+local InfJumpBtn = Instance.new("TextButton")
+InfJumpBtn.Size = UDim2.new(1, 0, 0, 40)
+InfJumpBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+InfJumpBtn.Text = "Inf Jump: OFF"
+InfJumpBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+InfJumpBtn.TextSize = 13
+InfJumpBtn.Font = Enum.Font.GothamBold
+InfJumpBtn.Parent = PageMain
+
+local InfCorner = Instance.new("UICorner")
+InfCorner.CornerRadius = UDim.new(0, 8)
+InfCorner.Parent = InfJumpBtn
+
+local infJumpEnabled = false
+InfJumpBtn.MouseButton1Click:Connect(function()
+    infJumpEnabled = not infJumpEnabled
+    if infJumpEnabled then
+        InfJumpBtn.Text = "Inf Jump: ON"
+        InfJumpBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+    else
+        InfJumpBtn.Text = "Inf Jump: OFF"
+        InfJumpBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            localPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+local NoclipBtn = Instance.new("TextButton")
+NoclipBtn.Size = UDim2.new(1, 0, 0, 40)
+NoclipBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+NoclipBtn.Text = "Noclip: OFF"
+NoclipBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+NoclipBtn.TextSize = 13
+NoclipBtn.Font = Enum.Font.GothamBold
+NoclipBtn.Parent = PageMain
+
+local NoclipCorner = Instance.new("UICorner")
+NoclipCorner.CornerRadius = UDim.new(0, 8)
+NoclipCorner.Parent = NoclipBtn
+
+local noclipEnabled = false
+NoclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    if noclipEnabled then
+        NoclipBtn.Text = "Noclip: ON"
+        NoclipBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+    else
+        NoclipBtn.Text = "Noclip: OFF"
+        NoclipBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if noclipEnabled then
+        local char = localPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+local FlyBtn = Instance.new("TextButton")
+FlyBtn.Size = UDim2.new(1, 0, 0, 40)
+FlyBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+FlyBtn.Text = "Fly: OFF"
+FlyBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+FlyBtn.TextSize = 13
+FlyBtn.Font = Enum.Font.GothamBold
+FlyBtn.Parent = PageMain
+
+local FlyCorner = Instance.new("UICorner")
+FlyCorner.CornerRadius = UDim.new(0, 8)
+FlyCorner.Parent = FlyBtn
+
+local flyEnabled = false
+FlyBtn.MouseButton1Click:Connect(function()
+    flyEnabled = not flyEnabled
+    if flyEnabled then
+        FlyBtn.Text = "Fly: ON"
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+    else
+        FlyBtn.Text = "Fly: OFF"
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local char = localPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+        local hrp = char.HumanoidRootPart
+        local hum = char.Humanoid
+        
+        if flyEnabled then
+            hum.PlatformStand = true
+            local moveDir = hum.MoveDirection
+            local flySpeed = 50
+            local velocity = Vector3.new(0, 0, 0)
+            
+            if moveDir.Magnitude > 0 then
+                velocity = camera.CFrame.LookVector * (moveDir.Z * -flySpeed) + camera.CFrame.RightVector * (moveDir.X * flySpeed)
+            end
+            
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                velocity = velocity + Vector3.new(0, flySpeed, 0)
+            elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                velocity = velocity - Vector3.new(0, flySpeed, 0)
+            end
+            
+            hrp.Velocity = velocity
+            hrp.RotVelocity = Vector3.new(0, 0, 0)
+        else
+            if hum.PlatformStand then
+                hum.PlatformStand = false
+            end
+        end
+    end
+end)
+
+local aimbotEnabled = false
+local espEnabled = false
+local wallCheckEnabled = false
+local teamCheckEnabled = false
+
+local AimbotBtn = Instance.new("TextButton")
+AimbotBtn.Size = UDim2.new(1, 0, 0, 40)
+AimbotBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+AimbotBtn.Text = "Aimbot: OFF"
+AimbotBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+AimbotBtn.TextSize = 13
+AimbotBtn.Font = Enum.Font.GothamBold
+AimbotBtn.Parent = PageAimbot
+
+local ABak = Instance.new("UICorner")
+ABak.CornerRadius = UDim.new(0, 8)
+ABak.Parent = AimbotBtn
+
+AimbotBtn.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    if aimbotEnabled then
+        AimbotBtn.Text = "Aimbot: ON"
+        AimbotBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+    else
+        AimbotBtn.Text = "Aimbot: OFF"
+        AimbotBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+    end
+end)
+
+local EspBtn = Instance.new("TextButton")
+EspBtn.Size = UDim2.new(1, 0, 0, 40)
+EspBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+EspBtn.Text = "ESP: OFF"
+EspBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+EspBtn.TextSize = 13
+EspBtn.Font = Enum.Font.GothamBold
+EspBtn.Parent = PageAimbot
+
+local EBak = Instance.new("UICorner")
+EBak.CornerRadius = UDim.new(0, 8)
+EBak.Parent = EspBtn
+
+local espFolder = Instance.new("Folder")
+espFolder.Name = "WASDHub_ESP"
+espFolder.Parent = ScreenGui
+
+local function removeEsp(player)
+    if espFolder:FindFirstChild(player.Name) then
+        espFolder[player.Name]:Destroy()
+    end
+end
+
+local function addEsp(player)
+    removeEsp(player)
+    if player == localPlayer then return end
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = player.Name
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = espFolder
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextSize = 14
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.Parent = billboard
+    
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if not espEnabled or not player.Character or not player.Character:FindFirstChild("Head") or not player.Character:FindFirstChild("Humanoid") then
+            billboard.Adornee = nil
+            textLabel.Text = ""
+            if not espEnabled then
+                billboard:Destroy()
+                connection:Disconnect()
+            end
+            return
+        end
+        
+        billboard.Adornee = player.Character.Head
+        local hp = math.floor(player.Character.Humanoid.Health)
+        local maxHp = math.floor(player.Character.Humanoid.MaxHealth)
+        textLabel.Text = player.Name .. "\nHP: " .. hp .. " / " .. maxHp
+    end)
+end
+
+EspBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    if espEnabled then
+        EspBtn.Text = "ESP: ON"
+        EspBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+        for _, p in pairs(Players:GetPlayers()) do
+            addEsp(p)
+        end
+    else
+        EspBtn.Text = "ESP: OFF"
+        EspBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+        espFolder:ClearAllChildren()
+    end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then
+            task.wait(1)
+            addEsp(player)
+        end
+    end)
+end)
+
+local WallCheckBtn = Instance.new("TextButton")
+WallCheckBtn.Size = UDim2.new(1, 0, 0, 40)
+WallCheckBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+WallCheckBtn.Text = "WallCheck: OFF"
+WallCheckBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+WallCheckBtn.TextSize = 13
+WallCheckBtn.Font = Enum.Font.GothamBold
+WallCheckBtn.Parent = PageAimbot
+
+local WBak = Instance.new("UICorner")
+WBak.CornerRadius = UDim.new(0, 8)
+WBak.Parent = WallCheckBtn
+
+WallCheckBtn.MouseButton1Click:Connect(function()
+    wallCheckEnabled = not wallCheckEnabled
+    if wallCheckEnabled then
+        WallCheckBtn.Text = "WallCheck: ON"
+        WallCheckBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+    else
+        WallCheckBtn.Text = "WallCheck: OFF"
+        WallCheckBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+    end
+end)
+
+local function isVisible(targetPart)
+    if not wallCheckEnabled then return true end
+    local char = localPlayer.Character
+    if not char or not char:FindFirstChild("Head") then return true end
+    
+    local origin = char.Head.Position
+    local direction = targetPart.Position - origin
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {char, targetPart.Parent}
+    raycastParams.IgnoreWater = true
+    
+    local result = Workspace:Raycast(origin, direction, raycastParams)
+    if result then
+        return false
+    end
+    return true
+end
+
+local TeamCheckBtn = Instance.new("TextButton")
+TeamCheckBtn.Size = UDim2.new(1, 0, 0, 40)
+TeamCheckBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+TeamCheckBtn.Text = "TeamCheck: OFF"
+TeamCheckBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+TeamCheckBtn.TextSize = 13
+TeamCheckBtn.Font = Enum.Font.GothamBold
+TeamCheckBtn.Parent = PageAimbot
+
+local TBak = Instance.new("UICorner")
+TBak.CornerRadius = UDim.new(0, 8)
+TBak.Parent = TeamCheckBtn
+
+TeamCheckBtn.MouseButton1Click:Connect(function()
+    teamCheckEnabled = not teamCheckEnabled
+    if teamCheckEnabled then
+        TeamCheckBtn.Text = "TeamCheck: ON"
+        TeamCheckBtn.BackgroundColor3 = Color3.fromRGB(60, 30, 90)
+    else
+        TeamCheckBtn.Text = "TeamCheck: OFF"
+        TeamCheckBtn.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if aimbotEnabled then
+        local closestPlayer = nil
+        local shortestDistance = math.huge
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Humanoid") then
+                if player.Character.Humanoid.Health > 0 then
+                    local isTeam = false
+                    if teamCheckEnabled and player.Team and player.Team == localPlayer.Team then
+                        isTeam = true
+                    end
+                    
+                    if not isTeam then
+                        local head = player.Character.Head
+                        if isVisible(head) then
+                            local pos, onScreen = camera:WorldToViewportPoint(head.Position)
+                            if onScreen then
+                                local mousePos = UserInputService:GetMouseLocation()
+                                local distance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                                if distance < shortestDistance then
+                                    shortestDistance = distance
+                                    closestPlayer = player
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        
+        if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.Head.Position)
+        end
+    end
+end)
